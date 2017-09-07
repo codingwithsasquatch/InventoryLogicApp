@@ -152,7 +152,7 @@
                   "type": "Http",
                   "inputs": {
                     "method": "GET",
-                    "uri": "[parameters('HTTP-URI')]"
+                    "uri": "[parameters('HTTP-URI')]@{items('For_each')?['productId']} "
                   }
                 },
                 "Parse_JSON": {
