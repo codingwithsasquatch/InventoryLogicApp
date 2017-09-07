@@ -1,198 +1,203 @@
-﻿{
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "logicAppName": {
-      "type": "string",
-      "defaultValue": "InventoryCheck",
-      "metadata": {
-        "description": "Name of the Logic App."
-      }
-    },
-    "logicAppLocation": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "allowedValues": [
-        "[resourceGroup().location]",
-        "eastasia",
-        "southeastasia",
-        "centralus",
-        "eastus",
-        "eastus2",
-        "westus",
-        "northcentralus",
-        "southcentralus",
-        "northeurope",
-        "westeurope",
-        "japanwest",
-        "japaneast",
-        "brazilsouth",
-        "australiaeast",
-        "australiasoutheast",
-        "westcentralus",
-        "westus2"
-      ],
-      "metadata": {
-        "description": "Location of the Logic App."
-      }
-    },
-    "HTTP-URI": {
-      "type": "string",
-      "defaultValue": ""
-    }
-  },
-  "variables": {},
-  "resources": [
-    {
-      "type": "Microsoft.Logic/workflows",
-      "apiVersion": "2016-06-01",
-      "name": "[parameters('logicAppName')]",
-      "location": "[parameters('logicAppLocation')]",
-      "dependsOn": [],
-      "properties": {
-        "definition": {
-          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-          "contentVersion": "1.0.0.0",
-          "parameters": {},
-          "triggers": {
-            "manual": {
-              "type": "Request",
-              "kind": "Http",
-              "inputs": {
-                "schema": {
-                  "properties": {
-                    "address": {
-                      "type": "string"
-                    },
-                    "cart": {
-                      "items": {
-                        "properties": {
-                          "productId": {
-                            "type": "number"
-                          },
-                          "quantity": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "productId",
-                          "quantity"
-                        ],
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "user": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "logicAppName": {
+            "defaultValue": "InventoryCheck",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Logic App."
             }
-          },
-          "actions": {
-            "Compose": {
-              "runAfter": {
-                "For_each": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Compose",
-              "inputs": "@body('Parse_JSON')"
-            },
-            "Condition": {
-              "actions": {
-                "Response": {
-                  "runAfter": {},
-                  "type": "Response",
-                  "inputs": {
-                    "body": "All items will be ordered",
-                    "statusCode": 200
-                  }
-                }
-              },
-              "runAfter": {
-                "Filter_array": [
-                  "Succeeded"
-                ]
-              },
-              "else": {
-                "actions": {
-                  "Response_2": {
-                    "runAfter": {},
-                    "type": "Response",
-                    "inputs": {
-                      "body": "We are short items on @{body('Filter_array')}",
-                      "statusCode": 200
-                    }
-                  }
-                }
-              },
-              "expression": "@equals(length(body('Filter_array')), 0)",
-              "type": "If"
-            },
-            "Filter_array": {
-              "runAfter": {
-                "Compose": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Query",
-              "inputs": {
-                "from": "@outputs('Compose')",
-                "where": "@less(item()['OnHand'], item()['quantity'])"
-              }
-            },
-            "For_each": {
-              "foreach": "@triggerBody()?['cart']",
-              "actions": {
-                "HTTP": {
-                  "runAfter": {},
-                  "type": "Http",
-                  "inputs": {
-                    "method": "GET",
-                    "uri": "[parameters('HTTP-URI')]@{items('For_each')?['productId']} "
-                  }
-                },
-                "Parse_JSON": {
-                  "runAfter": {
-                    "HTTP": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "ParseJson",
-                  "inputs": {
-                    "content": "@replace(string(body('HTTP')),'}',concat(', \"quantity\":', string(items('For_each')?['quantity']), '}'))",
-                    "schema": {
-                      "properties": {
-                        "Name": {
-                          "type": "string"
-                        },
-                        "OnHand": {
-                          "type": "number"
-                        },
-                        "Ordered": {
-                          "type": "number"
-                        },
-                        "quantity": {
-                          "type": "number"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  }
-                }
-              },
-              "runAfter": {},
-              "type": "Foreach"
-            }
-          },
-          "outputs": {}
         },
-        "parameters": {}
-      }
-    }
-  ],
-  "outputs": {}
+        "logicAppLocation": {
+            "defaultValue": "[resourceGroup().location]",
+            "allowedValues": [
+                "eastasia",
+                "southeastasia",
+                "centralus",
+                "eastus",
+                "eastus2",
+                "westus",
+                "northcentralus",
+                "southcentralus",
+                "northeurope",
+                "westeurope",
+                "japanwest",
+                "japaneast",
+                "brazilsouth",
+                "australiaeast",
+                "australiasoutheast",
+                "westcentralus",
+                "westus2"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Location of the Logic App. (if left black the location of the resource group is used)"
+            }
+        },
+        "HTTP-URI": {
+            "defaultValue": "https://invapi.azurewebsites.net/api/inventory",
+            "metadata": {
+                "description": "URI of function to request inventory info from."
+            },
+            "type": "String"
+        }
+    },
+    "variables": {
+        "location": "[if(equals(parameters('logicAppLocation'),''),resourceGroup().location,parameters('logicAppLocation'))]",
+        "singlequote": "'"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "name": "[parameters('logicAppName')]",
+            "apiVersion": "2016-06-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "address": {
+                                            "type": "string"
+                                        },
+                                        "cart": {
+                                            "items": {
+                                                "properties": {
+                                                    "productId": {
+                                                        "type": "number"
+                                                    },
+                                                    "quantity": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "productId",
+                                                    "quantity"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Compose": {
+                            "runAfter": {
+                                "For_each": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": "@body('Parse_JSON')"
+                        },
+                        "Condition": {
+                            "actions": {
+                                "Response": {
+                                    "runAfter": {},
+                                    "type": "Response",
+                                    "inputs": {
+                                        "body": "All items will be ordered",
+                                        "statusCode": 200
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Filter_array": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "else": {
+                                "actions": {
+                                    "Response_2": {
+                                        "runAfter": {},
+                                        "type": "Response",
+                                        "inputs": {
+                                            "body": "We are short items on @{body('Filter_array')}",
+                                            "statusCode": 200
+                                        }
+                                    }
+                                }
+                            },
+                            "expression": "@equals(length(body('Filter_array')), 0)",
+                            "type": "If"
+                        },
+                        "Filter_array": {
+                            "runAfter": {
+                                "Compose": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@outputs('Compose')",
+                                "where": "@less(item()['OnHand'], item()['quantity'])"
+                            }
+                        },
+                        "For_each": {
+                            "foreach": "@triggerBody()?['cart']",
+                            "actions": {
+                                "HTTP": {
+                                    "runAfter": {},
+                                    "type": "Http",
+                                    "inputs": {
+                                        "method": "GET",
+                                        "uri": "[concat(parameters('HTTP-URI'),'/@{items(',variables('singlequote'),'For_each',variables('singlequote'),')?[',variables('singlequote'),'productId',variables('singlequote'),']}')]"
+                                    }
+                                },
+                                "Parse_JSON": {
+                                    "runAfter": {
+                                        "HTTP": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@replace(string(body('HTTP')),'}',concat(', \"quantity\":', string(items('For_each')?['quantity']), '}'))",
+                                        "schema": {
+                                            "properties": {
+                                                "Name": {
+                                                    "type": "string"
+                                                },
+                                                "OnHand": {
+                                                    "type": "number"
+                                                },
+                                                "Ordered": {
+                                                    "type": "number"
+                                                },
+                                                "quantity": {
+                                                    "type": "number"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            },
+                            "runAfter": {},
+                            "type": "Foreach"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {}
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {}
 }
