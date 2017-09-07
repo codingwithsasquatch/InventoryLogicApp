@@ -1,6 +1,6 @@
 # InventoryLogicApp
 
-[![Deploy to Azure](https://azuredeploy.net/deploybutton.svg)](https://github.com/codingwithsasquatch/InventoryLogicApp/blob/master/template.json)
+[![Deploy to Azure](https://azuredeploy.net/deploybutton.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https://github.com/codingwithsasquatch/InventoryLogicApp/blob/master/template.json)
 
 This is an HTTP Logic App that calls the Inventory API and then returns information on whether or not each item is in stock.
 
